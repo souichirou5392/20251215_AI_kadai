@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最新ニュース一覧</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        /* 全体の設定：スクリーンショットに合わせてシンプルに */
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 見出し：大きく太く */
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        /* カテゴリ選択エリア */
+        .control-group {
+            margin-bottom: 30px;
+        }
+
+        /* ラベル：カテゴリを選択: */
+        label {
+            display: block; /* 改行させる */
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        /* プルダウンメニュー */
+        select {
+            padding: 5px;
+            font-size: 16px;
+            width: 200px;
+            border: 1px solid #777;
+            border-radius: 2px;
+        }
+
+        /* ニュースリスト */
+        .news-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .news-item {
+            margin-bottom: 30px; /* 記事ごとの間隔 */
+        }
+
+        /* ニュースタイトル */
+        .news-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .news-title a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .news-title a:hover {
+            text-decoration: underline;
+        }
+
+        /* ニュース本文 */
+        .news-desc {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        /* タグ（要件のため表示は残しますがシンプルに） */
+        .tags {
+            margin-top: 5px;
+        }
+        .tag {
+            display: inline-block;
+            font-size: 12px;
+            color: #666;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            margin-right: 5px;
+            border-radius: 4px;
+        }
+
+        /* 読み込み中 */
+        .loading {
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- タイトル -->
+    <h1>最新ニュース一覧</h1>
+
+    <!-- カテゴリ選択 -->
+    <div class="control-group">
+        <label>カテゴリを選択:</label>
+        <select v-model="selectedCategory" @change="fetchNews">
+            <!-- 「選択してください」を追加（機能的には選択不可に設定） -->
+            <option disabled value="">選択してください</option>
+            <option value="politics">政治</option>
+            <option value="it">IT</option>
+            <option value="sports">スポーツ</option>
+        </select>
+    </div>
+
+    <!-- ローディング -->
+    <div v-if="loading" class="loading">
+        ニュースを読み込み中です...
+    </div>
+
+    <!-- ニュースリスト -->
+    <ul v-else class="news-list">
+        <li v-for="(news, index) in newsList" :key="index" class="news-item">
+            <div class="news-title">
+                <a :href="news.link" target="_blank">{{ news.title }}</a>
+            </div>
+            
+            <div class="news-desc">
+                {{ news.description }}
+                <!-- タグ表示 -->
+                <div class="tags" v-if="news.tags && news.tags.length > 0">
+                    <span v-for="tag in news.tags" :key="tag" class="tag">
+                        #{{ tag }}
+                    </span>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<script>
+    // ★★★ ColabのURLを設定してください ★★★
+    const BACKEND_URL = " https://brooks-guidable-nonsportingly.ngrok-free.dev";
+
+    new Vue({
+        el: '#app',
+        data: {
+            selectedCategory: 'politics', // 初期選択は「政治」
+            newsList: [],
+            loading: false
+        },
+        mounted() {
+            this.fetchNews();
+        },
+        methods: {
+            fetchNews() {
+                // 空選択（選択してください）の場合は何もしない
+                if (!this.selectedCategory) return;
+
+                if (!BACKEND_URL || BACKEND_URL.includes("xxxx")) {
+                    alert("URLの設定を確認してください");
+                    return;
+                }
+                this.loading = true;
+                this.newsList = [];
+
+                fetch(`${BACKEND_URL}/api/news?category=${this.selectedCategory}`, {
+                    headers: new Headers({ "ngrok-skip-browser-warning": "true" })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    this.newsList = data;
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("データ取得失敗: Colabが起動しているか確認してください");
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
